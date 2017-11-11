@@ -157,7 +157,7 @@ function displayLowInventory() {
             truncate: "..."
         });
 
-        str1 = t1.render();
+        var str1 = t1.render();
         console.log(str1);
         managerStart();
     });
@@ -229,7 +229,7 @@ function addInventory() {
             truncate: "..."
         });
 
-        str1 = t1.render();
+        var str1 = t1.render();
         console.log(str1);
 
 

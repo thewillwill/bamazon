@@ -78,7 +78,7 @@ function displayAllItems() {
             truncate: "..."
         });
 
-        str1 = t1.render();
+        var str1 = t1.render();
         console.log(str1);
         customerStart();
     });
@@ -102,7 +102,7 @@ function customerStart() {
     inquirer.prompt({
         type: 'input',
         name: 'productID',
-        message: 'What is the ID of the product you would like to buy',
+        message: 'What is the ID of the product you would like to buy?',
         validate: function(value) {
             //check for a valid ID
             if (value > 0 && value <= maxID) {
@@ -167,8 +167,8 @@ function placeOrder(chosenID, quantityOrdered) {
 // adjust the stock remaining in database
 //-----------------------------
 function adjustStock(chosenID, quantityOrdered, currentStock) {
-        var remainingStock = (parseInt(currentStock) - parseInt(quantityOrdered);
-        connection.query("UPDATE products SET stock_quantity=? WHERE id=?", [remainingStock, chosenID], function(err) {
+    var remainingStock = parseInt(currentStock) - parseInt(quantityOrdered);
+    connection.query("UPDATE products SET stock_quantity=? WHERE id=?", [remainingStock, chosenID], function(err) {
             if (err) throw err;
             console.log("Stock Updated");
         });
@@ -177,15 +177,28 @@ function adjustStock(chosenID, quantityOrdered, currentStock) {
     }
 
 
-// Calculate the total price of the order
-//-----------------------------
-function calculateOrderTotal(chosenID, quantityOrdered) {
-    connection.query("SELECT price FROM products WHERE ?", { id: chosenID }, function(err, result) {
-        if (err) throw err;
-        var totalPrice = result[0].price * quantityOrdered;
-        console.log("Total Cost of Purchase: $" + totalPrice) 
-        customerStart();
-    });
+    // Calculate the total price of the order
+    //-----------------------------
+    function calculateOrderTotal(chosenID, quantityOrdered) {
+        connection.query("SELECT price FROM products WHERE ?", { id: chosenID }, function(err, result) {
+            if (err) throw err;
+            var totalPrice = result[0].price * quantityOrdered;
+            console.log("Total Cost of Purchase: $" + totalPrice);
 
-}
+            connection.query("SELECT product_sales FROM products WHERE ?", { id: chosenID }, function(err, result) {
+                if (err) throw err;
 
+                var currentSales = result[0].product_sales;
+                console.log('currentSales', currentSales)
+                console.log("Total Cost of Purchase: $" + totalPrice);
+
+                connection.query("UPDATE products SET product_sales=? WHERE id=?", [currentSales + totalPrice, chosenID], function(err) {
+                    if (err) throw err;
+                    console.log("Stock Updated");
+                    customerStart();
+                });
+                
+            });
+        });
+
+    }
