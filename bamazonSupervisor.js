@@ -118,7 +118,7 @@ function viewSalesByDepartment() {
             row.push(result[i].department_id);
             row.push(result[i].department_name);
             row.push("$" + result[i].over_head_costs);
-            1 row.push("$" + result[i].total_sales);
+            row.push("$" + result[i].total_sales);
             row.push("$" + result[i].total_profit);
             rows.push(row);
         }
@@ -144,8 +144,30 @@ function viewSalesByDepartment() {
 
 function createNewDepartment() {
 
-   
+    // prompt for info about the item  to add inventory to
+    inquirer.prompt([{
+                name: "name",
+                type: "input",
+                message: "What is the Department Name?"
+            },
+            {
+                name: "overhead",
+                type: "input",
+                message: "What is the overhead cost of the department?",
+            }
+        ])
+        .then(function(department) {
+
+            connection.query("INSERT INTO departments SET department_name=?,  over_head_costs=?", [department.name, department.overhead], function(err) {
+                if (err) throw err;
+                console.log("Department Added");
+                supervisorStart();
+            });
+
+        });
+
 }
+
 
 
 
