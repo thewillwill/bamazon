@@ -296,11 +296,11 @@ function addInventory() {
             inquirer.prompt([{
                 name: "id",
                 type: "input",
-                message: "What is the item ID?",
+                message: "What is the item ID? (q to quit)",
                 //check for a valid item number
                 validate: function(value) {
                     //check for a valid ID
-                    if (value > 0 && value <= maxID) {
+                    if (value > 0 && value <= maxID || value == 'q') {
                         return true;
                     }
                     return false;
@@ -312,6 +312,9 @@ function addInventory() {
             }])
         .then(function(item) {
 
+        if (item.productID == 'q') {
+             connection.end();
+        }
             var newStock;
 
             //check the stock

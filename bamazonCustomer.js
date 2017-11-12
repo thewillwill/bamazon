@@ -50,9 +50,66 @@ var connection = mysql.createConnection({
 connection.connect(function(err) {
     if (err) throw err;
     displayAllItems();
-    //  connection.end();
 });
 
+//return user to welcome/start prompt function 
+function customerStart() {
+    var maxID; //get the last ID number
+
+    var chosenID; //store the user selected product ID
+
+    connection.query("SELECT id FROM products ORDER BY id DESC LIMIT 1", function(err, result) {
+        if (err) {
+            throw err;
+        }
+        maxID = result[0].id;
+
+    });
+
+    inquirer.prompt({
+        type: 'input',
+        name: 'productID',
+        message: 'What is the ID of the product you would like to buy? (press q to Quit)',
+        validate: function(value) {
+            //check for a valid ID
+            if (value > 0 && value <= maxID || value === 'q') {
+                return true;
+            }
+            return false;
+        }
+
+    }).then(function(answer) {
+
+        if (answer.productID == 'q') {
+             connection.end();
+        }
+        //record the ID of the product to pass to function outside of this scope
+        chosenID = answer.productID;
+
+        inquirer.prompt({
+            type: 'input',
+            name: 'quantity',
+            message: 'How Many Units would you like to buy?',
+            validate: function(value) {
+                //check for a number
+                if (!isNaN(value)) {
+                    return true;
+                }
+                return false;
+            }
+        }).then(function(answer) {
+            placeOrder(chosenID, answer.quantity);
+        });
+    });
+}
+
+
+// ------------------------------
+//  FUNCTIONS
+// ------------------------------
+
+// Get all products from database and display in a table in console
+//-----------------------------
 function displayAllItems() {
 
     connection.query("SELECT * FROM products", function(err, result) {
@@ -60,6 +117,7 @@ function displayAllItems() {
             throw err;
         }
         var rows = [];
+        //go through the results and store them in an array of arrays (to display in Table)
         for (var i = 0; i < result.length; i++) {
             var row = [];
             row.push(result[i].id);
@@ -77,66 +135,15 @@ function displayAllItems() {
             color: "white",
             truncate: "..."
         });
-
+        //render the table
         var str1 = t1.render();
+        //display table
         console.log(str1);
+        //return user to welcome/start prompt
         customerStart();
     });
 
 }
-
-
-function customerStart() {
-    var maxID; //get the last ID number
-
-    var chosenID; //store the user selected product ID
-
-    connection.query("SELECT id FROM products ORDER BY id DESC LIMIT 1", function(err, result) {
-        if (err) {
-            throw err;
-        }
-        maxID = result[0].id;
-
-    });
-
-    inquirer.prompt({
-        type: 'input',
-        name: 'productID',
-        message: 'What is the ID of the product you would like to buy?',
-        validate: function(value) {
-            //check for a valid ID
-            if (value > 0 && value <= maxID) {
-                return true;
-            }
-            return false;
-        }
-
-    }).then(function(answer) {
-        //record the ID of the product to pass to function outside of this scope
-        chosenID = answer.productID;
-
-        inquirer.prompt({
-            type: 'input',
-            name: 'quantity',
-            message: 'How Many Units would you like to buy?',
-            validate: function(value) {
-                //check for a number       //TODO - change to max number of units available
-                if (!isNaN(value)) {
-                    return true;
-                }
-                return false;
-            }
-        }).then(function(answer) {
-            placeOrder(chosenID, answer.quantity);
-        });
-    });
-}
-
-
-// ------------------------------
-//  FUNCTIONS
-// ------------------------------
-
 
 // Check if enough stock to place order
 //-----------------------------
@@ -154,6 +161,7 @@ function placeOrder(chosenID, quantityOrdered) {
         //check if enough stock
         if (quantityOrdered > currentStock) {
             console.log("Not Enough Stock, We only have", currentStock, "in warehouse");
+            //return user to welcome/start prompt
             customerStart();
         }
         //if enough go ahead with order
@@ -169,36 +177,38 @@ function placeOrder(chosenID, quantityOrdered) {
 function adjustStock(chosenID, quantityOrdered, currentStock) {
     var remainingStock = parseInt(currentStock) - parseInt(quantityOrdered);
     connection.query("UPDATE products SET stock_quantity=? WHERE id=?", [remainingStock, chosenID], function(err) {
+        if (err) throw err;
+        console.log("Stock Updated");
+    });
+    //Once the update goes through, show the customer the total cost of their purchase
+    calculateOrderTotal(chosenID, quantityOrdered);
+}
+
+
+// Calculate the total price of the order
+//-----------------------------
+function calculateOrderTotal(chosenID, quantityOrdered) {
+    //get the orice from the database
+    connection.query("SELECT price FROM products WHERE ?", { id: chosenID }, function(err, result) {
+        if (err) throw err;
+        //calculate the total price
+        var totalPrice = result[0].price * quantityOrdered;
+        console.log("Total Cost of Purchase: $" + totalPrice);
+
+        //get the current total sales value from DB
+        connection.query("SELECT product_sales FROM products WHERE ?", { id: chosenID }, function(err, result) {
             if (err) throw err;
-            console.log("Stock Updated");
-        });
-        //Once the update goes through, show the customer the total cost of their purchase
-        calculateOrderTotal(chosenID, quantityOrdered);
-    }
+            var currentSales = result[0].product_sales;
 
-
-    // Calculate the total price of the order
-    //-----------------------------
-    function calculateOrderTotal(chosenID, quantityOrdered) {
-        connection.query("SELECT price FROM products WHERE ?", { id: chosenID }, function(err, result) {
-            if (err) throw err;
-            var totalPrice = result[0].price * quantityOrdered;
-            console.log("Total Cost of Purchase: $" + totalPrice);
-
-            connection.query("SELECT product_sales FROM products WHERE ?", { id: chosenID }, function(err, result) {
+            //store the new total in the database
+            connection.query("UPDATE products SET product_sales=? WHERE id=?", [currentSales + totalPrice, chosenID], function(err) {
                 if (err) throw err;
-
-                var currentSales = result[0].product_sales;
-                console.log('currentSales', currentSales)
-                console.log("Total Cost of Purchase: $" + totalPrice);
-
-                connection.query("UPDATE products SET product_sales=? WHERE id=?", [currentSales + totalPrice, chosenID], function(err) {
-                    if (err) throw err;
-                    console.log("Stock Updated");
-                    customerStart();
-                });
-                
+                console.log("Stock Updated");
+                //return user to welcome/start prompt
+                customerStart();
             });
-        });
 
-    }
+        });
+    });
+
+}
