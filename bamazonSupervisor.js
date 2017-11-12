@@ -153,10 +153,14 @@ function createNewDepartment() {
             {
                 name: "overhead",
                 type: "input",
-                message: "What is the overhead cost of the department?",
+                message: "What is the overhead cost of the department? (q to quit)",
             }
         ])
         .then(function(department) {
+
+            if (department.overhead == 'q') {
+                connection.end();
+            }
 
             connection.query("INSERT INTO departments SET department_name=?,  over_head_costs=?", [department.name, department.overhead], function(err) {
                 if (err) throw err;
