@@ -26,10 +26,10 @@ As part of coding bootcamp I created an command line 'storefront' using node.js 
 
 
 ## NPM Packages Used:
-1.
-2.
-4.
-5.
+1. inquirer  
+2. mysql
+4. tty-table
+5. chalk
 
 ## Authors:
 1. William Brooks
