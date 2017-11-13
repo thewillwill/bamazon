@@ -82,7 +82,9 @@ function customerStart() {
 
         if (answer.productID == 'q') {
              connection.end();
+             return;
         }
+
         //record the ID of the product to pass to function outside of this scope
         chosenID = answer.productID;
 
@@ -200,10 +202,9 @@ function calculateOrderTotal(chosenID, quantityOrdered) {
             if (err) throw err;
             var currentSales = result[0].product_sales;
 
-            //store the new total in the database
+            //store the new sales total in the database
             connection.query("UPDATE products SET product_sales=? WHERE id=?", [currentSales + totalPrice, chosenID], function(err) {
                 if (err) throw err;
-                console.log("Stock Updated");
                 //return user to welcome/start prompt
                 customerStart();
             });

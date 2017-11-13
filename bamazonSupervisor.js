@@ -70,7 +70,6 @@ var connection = mysql.createConnection({
 connection.connect(function(err) {
     if (err) throw err;
     supervisorStart();
-    //  connection.end();
 });
 
 
@@ -110,11 +109,9 @@ function viewSalesByDepartment() {
     query += "GROUP BY products.department_id";
 
     connection.query(query, function(err, result) {
-        console.log(result);
         var rows = [];
         for (var i = 0; i < result.length; i++) {
             var row = [];
-            console.log(result[i]);
             row.push(result[i].department_id);
             row.push(result[i].department_name);
             row.push("$" + result[i].over_head_costs);
@@ -153,14 +150,10 @@ function createNewDepartment() {
             {
                 name: "overhead",
                 type: "input",
-                message: "What is the overhead cost of the department? (q to quit)",
+                message: "What is the overhead cost of the department?",
             }
         ])
         .then(function(department) {
-
-            if (department.overhead == 'q') {
-                connection.end();
-            }
 
             connection.query("INSERT INTO departments SET department_name=?,  over_head_costs=?", [department.name, department.overhead], function(err) {
                 if (err) throw err;
