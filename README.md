@@ -3,7 +3,7 @@
 **A terminal based 'online' store**
 
 ## Introduction:
-As part of coding bootcamp I created an command line 'storefront' using node.js and the MySQL. The app takes in orders from customers and depletes stock from the store's inventory. The app can also track product sales across the store's departments and then provide a summary of the highest-grossing departments in the store.
+As part of coding bootcamp I created an command line 'storefront' using node.js and MySQL. The app takes in orders from customers and depletes stock from the store's inventory. The app can also track product sales across the store's departments and then provide a summary of the highest-grossing departments in the store.
 
 ### 1. Customer Interface
 -----------------------------------------------
